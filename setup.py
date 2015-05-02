@@ -35,6 +35,7 @@ setup(
     package_data={
        'weefeesher': [
            'templates/sites/*',
+           'templates/*',
            'conf/dnsmasq.conf'
            ]
     },
