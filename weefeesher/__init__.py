@@ -7,11 +7,11 @@ import signal
 import os
 
 from weefeesher.utils.output import Logger
-from flask import Flask,flash,render_template
+from flask import Flask,flash,render_template,request
 
-#import logging
-#log = logging.getLogger('werkzeug')
-#log.setLevel(logging.ERROR)
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -32,8 +32,13 @@ class Web():
         self.app =  Flask(__name__)
 
     def run(self):
-        @self.app.route('/')
+        @self.app.route('/', methods = ['GET', 'POST'])
         def index():
+            if request.method == 'POST':
+                data = request.form
+                for key in data.keys():
+                    for value in data.getlist(key):
+                        Logger.userinfo("%s : %s" % (key, value))
             return render_template('index.html')
 
         self.app.run('192.168.10.1',80)

@@ -36,7 +36,9 @@ setup(
        'weefeesher': [
            'templates/sites/*',
            'templates/*',
-           'conf/dnsmasq.conf'
+           'conf/dnsmasq.conf',
+           'static/css/*',
+           'static/images/*'
            ]
     },
     entry_points={
